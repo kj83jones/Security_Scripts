@@ -1,0 +1,62 @@
+# This file goes in: .github/workflows/tests.yml
+# GitHub Actions runs this automatically every time you push code.
+# It checks that your scripts have no syntax errors and runs any tests.
+# This is CI (Continuous Integration) — the same concept used in
+# production security pipelines to catch issues before deployment.
+
+name: Security Scripts CI
+
+# When does this run?
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+
+      # Step 4: Check for syntax errors and basic code quality
+      - name: Lint with flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Warn on style issues but don't fail the build
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+
+      # Step 5: Run the test suite
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v --tb=short
+
+      # Step 6: Verify all scripts can at least import without errors
+      - name: Verify script imports
+        run: |
+          python -c "import cve_lookup; print('✅ cve_lookup.py OK')"
+          python -c "import vuln_tracker; print('✅ vuln_tracker.py OK')"
+          python -c "import sla_monitor; print('✅ sla_monitor.py OK')"
+          python -c "import log_analyzer; print('✅ log_analyzer.py OK')"
+          python -c "import port_scanner; print('✅ port_scanner.py OK')"
+          python -c "import ip_reputation; print('✅ ip_reputation.py OK')"
+          python -c "import file_integrity; print('✅ file_integrity.py OK')"
+          python -c "import compliance_checker; print('✅ compliance_checker.py OK')"
+          python -c "import evidence_collector; print('✅ evidence_collector.py OK')"
